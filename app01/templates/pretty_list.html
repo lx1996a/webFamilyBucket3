@@ -1,0 +1,78 @@
+{% extends 'layout.html' %}
+
+{% block js %}
+    <script>
+        $(function (){
+            // 页面跳转也能保留搜索条件
+            $("#f1").on("submit",function (){
+                var d = $('[name="search_m"]').val();
+                $("#f1").prepend('<input type="hidden" name="search_m" value="'+d+'">')
+            });
+        })
+
+    </script>
+
+{% endblock %}
+
+
+{% block content %}
+    <div class="container">
+        <div style="padding-bottom: 15px">
+            <a class="btn btn-success" href="/pretty/add/">
+                <span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span>
+                添加靓号
+            </a>
+            <div style="width: 300px;float:right">
+                <form method="get">
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="search_m"  placeholder="Search for..."
+                               value="{{ search_data }}">
+                        <span class="input-group-btn">
+                        <button class="btn btn-default" type="submit">
+                            <span class="glyphicon glyphicon-search"></span>
+                        </button>
+                    </span>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <!-- Default panel contents -->
+            <div class="panel-heading">
+                <span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+                靓号列表
+            </div><!-- Table -->
+            <table class="table table-bordered">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>手机号</th>
+                    <th>价格</th>
+                    <th>级别</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for data in data_list %}
+                    <tr>
+                        <th>{{ data.id }}</th>
+                        <td>{{ data.mobile }}</td>
+                        <td>{{ data.price }}</td>
+                        <td>{{ data.get_level_display }}</td>
+                        <td>{{ data.get_status_display }}</td>
+                        <td>
+                            <a class="btn btn-primary btn-xs" href="/pretty/{{ data.id }}/edit/">编辑</a>
+                            <a class="btn btn-primary btn-xs" href="/pretty/{{ data.id }}/delete/">删除</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <ul class="pagination" style="float: right">
+            {{ page_string }}
+        </ul>
+    </div>
+{% endblock %}
+

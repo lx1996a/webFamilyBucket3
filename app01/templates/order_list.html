@@ -1,0 +1,263 @@
+{% extends 'layout.html' %}
+
+{% block js %}
+    <script>
+        var DELETE_ID;
+        var EDIT_ID;
+        $(function () {
+            bindAddBtnEvent();
+            bindSaveBtnEvent();
+            bindDeleteBtnEvent();
+            bindConfirmDeleteBtnEvent();
+            bindEditBtnEvent();
+        })
+
+        function bindAddBtnEvent() {
+            $("#addbtn").click(function () {
+                // 新增时，编辑的ID设置为空
+                EDIT_ID = undefined;
+                $("#myModalLabel").text("新建");
+                // 清空表单内容  $("#addform")是jQuery对象  -> $("#addform")[0] 是DOM对象
+                $("#addform")[0].reset();
+                $("#myLxModal").modal('show');
+            });
+        }
+
+        function bindSaveBtnEvent() {
+            // 清空报错信息
+            $(".errmsg").text("")
+            // 发起请求
+            $("#savebtn").click(function () {
+                if (EDIT_ID) {
+                    //编辑操作
+                    doEdit();
+                } else {
+                    //新建操作
+                    doADD();
+                }
+            });
+        }
+
+        function doEdit() {
+            $.ajax({
+                url: "/order/edit/" + "?nid=" + EDIT_ID,
+                type: "post",
+                data: $("#addform").serialize(),
+                dataType: "JSON",
+                success: function (res) {
+                    if (res.status) {
+                        alert("修改成功！");
+                        // 重新加载页面
+                        location.reload();
+                    } else {
+                        if (res.tips) {
+                            alert(res.tips);
+                        } else {
+                            // 显示报错信息
+                            $.each(res.error, function (name, data) {
+                                $("#id_" + name).next().text(data[0])
+                            })
+                        }
+                    }
+                }
+            })
+        }
+
+        function doADD() {
+            $.ajax({
+                url: "/order/add/",
+                type: "post",
+                data: $("#addform").serialize(),
+                dataType: "JSON",
+                success: function (res) {
+                    if (res.status) {
+                        alert("添加成功！");
+                        // 清空表单内容  $("#addform")是jQuery对象  -> $("#addform")[0] 是DOM对象
+                        // $("#addform")[0].reset()
+                        // 隐藏模态框
+                        // $("#myLxModal").modal('hide');
+                        // 重新加载页面
+                        location.reload();
+                    } else {
+                        // 显示报错信息
+                        $.each(res.error, function (name, data) {
+                            $("#id_" + name).next().text(data[0])
+                        })
+                    }
+                }
+            })
+        }
+
+        function bindDeleteBtnEvent() {
+            $(".btn-delete").click(function () {
+                // 打开模态框
+                $("#deleteModal").modal("show")
+                // 记录该行id
+                // alert($(this).attr("nid"))
+                DELETE_ID = $(this).attr("nid")
+            });
+        }
+
+        function bindConfirmDeleteBtnEvent() {
+            $("#confirmdelete").click(function () {
+                $.ajax({
+                    url: "/order/delete/",
+                    type: "GET",
+                    data: {
+                        nid: DELETE_ID,
+                        },
+                    dataType: "JSON",
+                    success: function (res) {
+                        if (res.status) {
+
+                            // 方法一：重新加载页面
+                            location.reload();
+
+                            // 方法二：首先隐藏模态框，再使用js 删除数据，并将DELETE_ID置为0  【问题：页码不会更新】
+                            /* $("#deleteModal").modal('hide'); // 隐藏模态框
+                            $('tr[id*="'+DELETE_ID+'"]').remove();
+                            DELETE_ID = 0; */
+
+                        } else {
+                            alert(res.error)
+                        }
+                    }
+                })
+            });
+        }
+
+        function bindEditBtnEvent(){
+            $(".btn-edit").click(function (){
+                // 清空表单内容  $("#addform")是jQuery对象  -> $("#addform")[0] 是DOM对象
+                $("#addform")[0].reset();
+                // 获取修改行id
+                var updata_id = $(this).attr("nid");
+                // 设置当前修改的ID
+                EDIT_ID = updata_id;
+                // 获取修改行数据
+                $.ajax({
+                    url: "/order/detail/",
+                    type: "get",
+                    data: {
+                        nid: updata_id,
+                    },
+                    dataType: "JSON",
+                    success: function (res){
+                        if(res.status){
+                            // 将数据赋值到对话框标签中
+                            $.each(res.data,function (name,value){
+                                $("#id_"+name).val(value);
+                            })
+                            $("#myModalLabel").text("编辑"); // 修改模态框标题
+                            $("#myLxModal").modal("show"); // 展示模态框
+
+                        }else{
+                            alert(res.error);
+                        }
+                    }
+                })
+            })
+        }
+
+
+    </script>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div>
+            {# <input type="button" class="btn btn-primary" value="新建订单1" data-toggle="modal" data-target="#myLxModal"> #}
+            <input type="button" class="btn btn-success" value="新建订单" id="addbtn">
+        </div>
+        <div class="panel panel-default" style="margin-top: 10px;">
+            <!-- Default panel contents -->
+            <div class="panel-heading">
+                <span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+                靓号列表
+            </div><!-- Table -->
+            <table class="table table-bordered">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>订单号</th>
+                    <th>名称</th>
+                    <th>价格</th>
+                    <th>状态</th>
+                    <th>管理员</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for data in data_list %}
+                    <tr id="{{ data.id }}">
+                        <th>{{ data.id }}</th>
+                        <td>{{ data.oid }}</td>
+                        <td>{{ data.title }}</td>
+                        <td>{{ data.price }}</td>
+                        <td>{{ data.get_status_display }}</td>
+                        <td>{{ data.user.name }}</td>
+                        <td>
+                            <input nid="{{ data.id }}" type="button" class="btn btn-primary btn-xs btn-edit" value="编辑">
+                            <input nid="{{ data.id }}" type="button" class="btn btn-danger btn-xs btn-delete" value="删除">
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <ul class="pagination" style="float: right">
+            {{ page_string }}
+        </ul>
+
+    </div>
+
+
+    <!-- 新建\编辑 订单（模态框） -->
+    <div class="modal fade" id="myLxModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">新建</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="addform">
+                        <div class="clearfix">
+
+                            {% for field in form %}
+                                <div class="col-xs-6">
+                                    <div class="form-group" style="position: relative;padding-bottom: 20px">
+                                        <label>{{ field.label }}</label>
+                                        {{ field }}
+                                        <span class="errmsg" style="color: red;position: absolute"></span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+
+                        </div>
+                    </form>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取 消</button>
+                    <button type="button" class="btn btn-primary" id="savebtn">保 存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除订单（模态框） -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="alert alert-danger alert-dismissible fade in" role="alert">
+                <h4>是否确认删除？</h4>
+                <p style="margin: 10px 0">删除后，所有关联的相关数据都会被删除。</p>
+                <p style="text-align: right">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-danger" id="confirmdelete">确定</button>
+                </p>
+            </div>
+        </div>
+    </div>
+{% endblock %}

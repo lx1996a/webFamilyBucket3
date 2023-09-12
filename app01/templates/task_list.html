@@ -1,0 +1,91 @@
+{% extends 'layout.html' %}
+
+{% block js %}
+    <script>
+        $(function () {
+            btn3Event();
+            btnaddEvent();
+
+        })
+
+        function btn3Event() {
+            $("#btn3").click(function () {
+                $.ajax({
+                    url: "/task/ajax/",
+                    type: "post",
+                    data: $("#form3").serialize(),
+                    dataType: "json",
+                    success: function (res) {
+                        console.log(res);
+                        console.log(res.n1);
+                        console.log(res.n2);
+                    }
+                })
+            })
+        }
+
+        function btnaddEvent(){
+            $("#addbtn").click(function (){
+                // 清空报错信息
+                $(".err_msg").text("")
+
+                $.ajax({
+                    url: "/task/add/",
+                    type: "post",
+                    data: $("#addform").serialize(),
+                    dataType: "JSON",
+                    success: function(res){
+                        if(res.stutas){
+                            alert("添加成功")
+
+                        }else{
+                            $.each(res.error,function (name,data){
+                                $("#id_"+name).next().text(data)
+                            })
+                        }
+                    }
+                })
+            })
+        }
+
+    </script>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="panel panel-default">
+            <div class="panel-heading">表单</div>
+            <div class="panel-body">
+
+                <form id="addform" novalidate>
+                    <div class="clearfix">
+                        {% for field in form %}
+                            <div class="col-xs-6">
+                                <div class="form-group" style="position: relative;padding-bottom: 20px">
+                                    <label>{{ field.label }}</label>
+                                    {{ field }}
+                                    <span style="color: red;position: absolute" class="err_msg"></span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        <div class="col-xs-12">
+                            <button type="button" id="addbtn" class="btn btn-primary">提交</button>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+
+
+        <hr>
+        <h3>Ajax学习</h3>
+        <form id="form3">
+            <input type="text" name="username" placeholder="姓名">
+            <input type="text" name="age" placeholder="年龄">
+            <input type="text" name="email" placeholder="邮箱">
+            <input type="text" name="more" placeholder="介绍">
+        </form>
+        <input type="button" class="btn btn-primary" id="btn3" value="点击3">
+    </div>
+{% endblock %}
